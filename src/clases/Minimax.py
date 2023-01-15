@@ -42,22 +42,11 @@ class Minimax:
     hasta vaciarla o completar la profundidad.
     """
     while (self.__listaEspera != []):
-    # for i in range (10):
       self.__expandirNodo(self.__listaEspera.pop(0), profundidad)
-      # print("Valores minimax:")
-      # print(self.__valoresMinimax)
-      # print("Nodos:")
-      # for nodo in self.__nodos:
-      #   if nodo["posicion"] == 4:
-      #     print("  posicion: {}, padre: {}, pc: {}, jugador: {}.".format(nodo["posicion"], nodo["padre"], nodo["pc"], nodo["jugador"]))
-      #     for row in nodo["tablero"]:
-      #       print(row)
-      #     continue
-      #   print("  posicion: {}, padre: {}, pc: {}, jugador: {}.".format(nodo["posicion"], nodo["padre"], nodo["pc"], nodo["jugador"]))
-      # print("Lista de espera:")
-      # for nodo in self.__listaEspera:
-      #   print("  padre: {}, pc: {}, jugador: {}.".format(nodo["padre"], nodo["pc"], nodo["jugador"]))
-    print(self.__valoresMinimax)
+
+    for nodo in self.__valoresMinimax:
+      if (nodo["valor"] != None):
+        print(nodo)
 
 
   def __expandirNodo(self, nodo: dict, profundidad: int):
@@ -71,18 +60,19 @@ class Minimax:
 
     if(nodo["posicion"] >= profundidad):
       "Evaluar heurística y podar el árbol de nodos."
-      # print("LLEGÓ A LA PROFUNDIDAD.")
       self.__heuristica(nodo)
       self.__podarNodos()
       return
 
     self.__nodos.append(nodo)
-    self.__valoresMinimax.append(None)
+    self.__valoresMinimax.append({
+      "padre": self.__encontrarPadre(nodo["posicion"] - 1),
+      "posicion": len(self.__valoresMinimax),
+      "profundidad": nodo["posicion"],
+      "valor": None
+    })
 
     jugadasPosibles = self.__evaluarJugadas(nodo, jugadorTurno)
-
-    if (len(jugadasPosibles) == 0):
-      jugadasPosibles = [[0, 0]]
 
     for jugada in jugadasPosibles:
       self.__crearHijo(nodo, jugada, jugadorTurno, valor)
@@ -110,6 +100,9 @@ class Minimax:
         "La posición está fuera del rango de la lista"
         continue
 
+    if (len(jugadas) == 0):
+      jugadas = [nodo[jugadorTurno]]
+
     return jugadas
 
 
@@ -125,15 +118,15 @@ class Minimax:
       nuevoTablero[jugada[0] + 1][jugada[1]] = valor - 1
       nuevoTablero[jugada[0]][jugada[1] + 1] = valor - 1
 
-    nuevoTablero[jugada[0]][jugada[1]] = valor
     nuevoTablero[padre[jugadorTurno][0]][padre[jugadorTurno][1]] = valor - 1
+    nuevoTablero[jugada[0]][jugada[1]] = valor
 
     hijo = {
       "padre": padre["posicion"],
       "pc": padre["pc"],
       "jugador": padre["jugador"],
       "tablero": nuevoTablero
-    } 
+    }
 
     hijo[jugadorTurno] = jugada[:]
 
@@ -151,7 +144,7 @@ class Minimax:
         elif (casilla == 4):
           nuevoValor -= 1
 
-      self.__seleccionarValor(nuevoValor, nodo["posicion"])
+      self.__seleccionarValor(nuevoValor, (nodo["posicion"] - 1))
 
 
   def __podarNodos(self):
@@ -162,17 +155,27 @@ class Minimax:
     # print("A PODAR.")
     while(self.__listaEspera != [] and self.__listaEspera[0]["padre"] != self.__nodos[-1]["posicion"]):
       pos = self.__nodos.pop()["posicion"]
-      val = self.__valoresMinimax.pop()
+      # val = self.__valoresMinimax[pos]["valor"]
 
-      self.__seleccionarValor(val, pos - 1)
+      # self.__seleccionarValor(val, (pos - 1))
 
 
-  def __seleccionarValor(self, val, pos):
+  def __seleccionarValor(self, val: int, pos: int):
     "Elegir el menor o mayor valor según el tipo nodo."
-    if (self.__valoresMinimax[-1] == None):
-      self.__valoresMinimax[-1] = val
-    else:
-      self.__valoresMinimax[-1] = max(
-        self.__valoresMinimax[-1] * ((-1) ** pos), 
-        val * ((-1) ** pos)) * ((-1) ** pos
-      )
+    self.__selecValAux(val, pos, self.__valoresMinimax[-1])
+
+
+  def __selecValAux(self, val: int, pos: int, nodo):
+    esMayor = (nodo["valor"] == None) or (nodo["valor"] * ((-1) ** pos) < val * ((-1) ** pos))
+
+    if (esMayor):
+      nodo["valor"] = val
+
+      if(nodo["padre"] != None):
+        self.__selecValAux(val, pos - 1, self.__valoresMinimax[nodo["padre"]])
+
+
+  def __encontrarPadre(self, profundidad: int):
+    for i in range(-1, -1 - len(self.__valoresMinimax), -1):
+      if (self.__valoresMinimax[i]["profundidad"] == profundidad):
+        return len(self.__valoresMinimax) + i

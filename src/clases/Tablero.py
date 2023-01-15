@@ -19,9 +19,6 @@ class Tablero:
     self.__crearPoderes()
     self.__crearJugadores()
 
-    for fila in self.__tablero:
-      print(fila)
-
 
   def __crearPoderes(self):
     """
@@ -68,6 +65,11 @@ class Tablero:
     self.__jugador = jugadores[1]
 
 
+  def imprimirTablero (self):
+    for fila in self.__tablero:
+      print(fila)
+
+
   def getTablero(self):
     return deepcopy(self.__tablero)
 
@@ -92,10 +94,30 @@ class Tablero:
     Mover la ficha del jugador a las nuevas coordenadas
     pintando la casilla en la cual se encontraba.
     """
+    if (self.__tablero[i][j] == 1):
+      self.__agarrarPoder(i, j)
+
     self.__tablero[i][j] = self.__tablero[self.__jugador[0]][self.__jugador[1]]
     self.__tablero[self.__jugador[0]][self.__jugador[1]] -= 1
 
     self.__jugador = [i, j]
+
+
+  def __agarrarPoder(self, i: int, j: int):
+    """
+    Pintar las cuatro casillas contiguas a la casilla en que se 
+    encontraba el poder.
+
+    Args:
+        i (int): Posición i de la casilla en donde se encontraba el poder
+          y ahora se encuentra el jugador.
+        j (int): Posicion j de la casilla en donde se encontraba el poder
+          y ahora se encuentra el jugador.
+    """
+    direcciones = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+
+    for [di, dj] in direcciones:
+      self.__tablero[di + i][dj + j] = self.__tablero[i][j] - 1
 
 
   def evaluarJugadas(self):
