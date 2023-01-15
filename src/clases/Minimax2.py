@@ -8,10 +8,10 @@ class Minimax:
   __nodos = []
   __listaEspera = []
   __valoresMinimax = []
-  __movimiento = []
+  __movimiento = [0, 0]
 
 
-  def __init__ (self, tablero: list, nivel: int, pc: tuple, jugador: tuple):
+  def __init__ (self, tablero: list, nivel: int):
     """
     Función que da inicio al algoritmo minimax.
 
@@ -24,13 +24,13 @@ class Minimax:
     self.__nodos.clear()
     self.__listaEspera.clear()
 
-    casLibres, valorNodo =self.__contarCasillas(tablero)
+    casLibres, valorNodo, pc, jugador =self.__contarCasillas(tablero)
 
     nuevoNodo = {
       "padre": None,
       "posicion": 0,
       "profundidad": 0,
-      "tablero": tablero,
+      "tablero": deepcopy(tablero),
       "pc": pc,
       "jugador": jugador,
       "valor": valorNodo,
@@ -43,8 +43,8 @@ class Minimax:
 
     self.__minimax()
 
-    print(self.__nodos[0]["pc"])
-    print(self.__movimiento)
+    self.__nodos.clear()
+    self.__valoresMinimax.clear()
 
 
   def __amplitud(self, profundidad):
@@ -54,21 +54,6 @@ class Minimax:
     """
     while (self.__listaEspera != []):
       self.__expandirNodo(self.__listaEspera.pop(0), profundidad)
-
-    for i in range(profundidad + 1):
-      for nodo in self.__nodos:
-        if (nodo["profundidad"] == i):
-          print("padre: {}, posicion: {}, profundidad: {}, pc: {}, jugador: {}, valor: {}.".format(
-            nodo["padre"], 
-            nodo["posicion"], 
-            nodo["profundidad"], 
-            nodo["pc"], 
-            nodo["jugador"], 
-            nodo["valor"]
-          ))
-
-    for fila in (self.__nodos[-4]["tablero"]):
-      print(fila)
 
 
   def __expandirNodo(self, nodo, profundidad):
@@ -123,10 +108,7 @@ class Minimax:
     nuevoTablero = deepcopy(padre["tablero"])
 
     if (nuevoTablero[jugada[0]][jugada[1]] == 1):
-      nuevoTablero[jugada[0] - 1][jugada[1]] = valor - 1
-      nuevoTablero[jugada[0]][jugada[1] - 1] = valor - 1
-      nuevoTablero[jugada[0] + 1][jugada[1]] = valor - 1
-      nuevoTablero[jugada[0]][jugada[1] + 1] = valor - 1
+      self.__agarrarPoder(jugada[0], jugada[1], valor, nuevoTablero)
 
       aumentoValor += 4
 
@@ -148,13 +130,45 @@ class Minimax:
     self.__listaEspera.append(hijo)
 
 
+  def __agarrarPoder(self, i: int, j: int, jugador: int, tablero: list):
+    """
+    Pintar las cuatro casillas contiguas a la casilla en que se 
+    encontraba el poder.
+
+    Args:
+        i (int): Posición i de la casilla en donde se encontraba el poder
+          y ahora se encuentra el jugador.
+        j (int): Posicion j de la casilla en donde se encontraba el poder
+          y ahora se encuentra el jugador.
+    """
+    direcciones = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+    casillasAfectadas = []
+
+    for [di, dj] in direcciones:
+      if (di + i < 0 or dj + j < 0):
+        continue
+
+      try:
+        if (tablero[di + i][dj + j] == 0):
+          tablero[di + i][dj + j] = jugador - 1
+          casillasAfectadas.append([i, j])
+      except:
+        "La posición está fuera del rango de la lista"
+        continue
+
+    return casillasAfectadas
+
+
   def __contarCasillas(self, tablero: list):
     conteo = [0, 0, 0, 0, 0, 0]
-    for fila in tablero:
-      for casilla in fila:
-        conteo[casilla] += 1
+    posiciones = [[], [], [], [], [], []]
 
-    return conteo[0], conteo[2] - conteo[4]
+    for i in range(len(tablero)):
+      for j in range(len(tablero[0])):
+        conteo[tablero[i][j]] += 1
+        posiciones[tablero[i][j]] = [i, j]
+
+    return conteo[0], conteo[2] - conteo[4], posiciones[3], posiciones[5]
 
 
   def __minimax(self):

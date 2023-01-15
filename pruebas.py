@@ -16,7 +16,9 @@ tablero = [
   [0, 0, 0, 0, 0, 0, 0, 0]
 ]
 
-Minimax(tablero, 1, (4, 1), (0, 7))
+pc = Minimax(tablero, 1)
+
+print(pc.getMovimiento())
 
 # tablero = Tablero()
 
