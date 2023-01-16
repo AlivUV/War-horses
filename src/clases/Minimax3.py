@@ -8,6 +8,7 @@ class Minimax:
   __nodos = []
   __listaEspera = []
   __valoresMinimax = []
+  __movimientos = []
   __movimiento = [0, 0]
 
 
@@ -28,28 +29,42 @@ class Minimax:
 
     nuevoNodo = {
       "padre": None,
-      "posicion": 0,
       "profundidad": 0,
-      "tablero": deepcopy(tablero),
       "pc": pc,
       "jugador": jugador,
+      "tablero": deepcopy(tablero),
+      "casillasLibres": casLibres,
       "valor": valorNodo,
-      "casillasLibres": casLibres
+      "posicion": 0
     }
 
     self.__listaEspera.append(nuevoNodo)
 
-    self.__amplitud(nivel * 2)
+    self.__profundidad(nivel * 2)
 
-    self.__minimax()
+    self.__movimiento = self.__movimientos[0]
 
-    print(self.__movimiento)
+    print(self.__valoresMinimax)
+    print(self.__movimientos)
 
     self.__nodos.clear()
     self.__valoresMinimax.clear()
 
 
-  def __amplitud(self, profundidad):
+  def __contarCasillas(self, tablero: list):
+    "Recorrer el tablero para saber la cantidad de casillas libres"
+    conteo = [0, 0, 0, 0, 0, 0]
+    posiciones = [[], [], [], [], [], []]
+
+    for i in range(len(tablero)):
+      for j in range(len(tablero[0])):
+        conteo[tablero[i][j]] += 1
+        posiciones[tablero[i][j]] = [i, j]
+
+    return conteo[0], conteo[2] - conteo[4], posiciones[3], posiciones[5]
+
+
+  def __profundidad(self, profundidad: int):
     """
     Bucle que expande los nodos restantes en la lista de espera
     hasta vaciarla o completar la profundidad.
@@ -58,7 +73,7 @@ class Minimax:
       self.__expandirNodo(self.__listaEspera.pop(0), profundidad)
 
 
-  def __expandirNodo(self, nodo, profundidad):
+  def __expandirNodo(self, nodo: dict, profundidad: int):
     """
     Añadir el nodo a la lista de nodos y crear sus hijos 
     poniéndolos en la lista de espera.
@@ -68,13 +83,16 @@ class Minimax:
     jugadorTurno, valor = ("pc", 3) if (nodo["profundidad"] % 2 == 0) else ("jugador", 5)
 
     self.__nodos.append(nodo)
+    self.__valoresMinimax.append(None)
+    self.__movimientos.append(None)
 
     if (nodo["profundidad"] < profundidad):
       for jugada in self.__evaluarJugadas(nodo, jugadorTurno):
         self.__crearHijo(nodo, jugada, jugadorTurno, valor)
       del nodo["tablero"]
     else:
-      self.__valoresMinimax.append(nodo)
+      self.__evaluarValores(nodo["valor"], nodo["pc"], nodo)
+      self.__poda()
 
 
   def __evaluarJugadas(self, nodo: dict, jugadorTurno: str):
@@ -111,9 +129,7 @@ class Minimax:
     nuevoTablero = deepcopy(padre["tablero"])
 
     if (nuevoTablero[jugada[0]][jugada[1]] == 1):
-      self.__agarrarPoder(jugada[0], jugada[1], valor, nuevoTablero)
-
-      aumentoValor += 4
+      aumentoValor += self.__agarrarPoder(jugada[0], jugada[1], valor, nuevoTablero)
 
     nuevoTablero[padre[jugadorTurno][0]][padre[jugadorTurno][1]] = valor - 1
     nuevoTablero[jugada[0]][jugada[1]] = valor
@@ -124,13 +140,13 @@ class Minimax:
       "pc": padre["pc"][:],
       "jugador": padre["jugador"][:],
       "tablero": nuevoTablero,
-      "valor": padre["valor"] + (aumentoValor * ((-1) ** (padre["profundidad"]))),
-      "casillasLibres": padre["casillasLibres"] - aumentoValor
+      "casillasLibres": padre["casillasLibres"] - aumentoValor,
+      "valor": padre["valor"] + (aumentoValor * ((-1) ** (padre["profundidad"])))
     }
 
     hijo[jugadorTurno] = jugada[:]
 
-    self.__listaEspera.append(hijo)
+    self.__listaEspera.insert(0, hijo)
 
 
   def __agarrarPoder(self, i: int, j: int, jugador: int, tablero: list):
@@ -145,7 +161,7 @@ class Minimax:
           y ahora se encuentra el jugador.
     """
     direcciones = [(-1, 0), (0, 1), (1, 0), (0, -1)]
-    casillasAfectadas = []
+    casillasAfectadas = 0
 
     for [di, dj] in direcciones:
       if (di + i < 0 or dj + j < 0):
@@ -154,7 +170,7 @@ class Minimax:
       try:
         if (tablero[di + i][dj + j] == 0):
           tablero[di + i][dj + j] = jugador - 1
-          casillasAfectadas.append([i, j])
+          casillasAfectadas += 1
       except:
         "La posición está fuera del rango de la lista"
         continue
@@ -162,40 +178,36 @@ class Minimax:
     return casillasAfectadas
 
 
-  def __contarCasillas(self, tablero: list):
-    conteo = [0, 0, 0, 0, 0, 0]
-    posiciones = [[], [], [], [], [], []]
-
-    for i in range(len(tablero)):
-      for j in range(len(tablero[0])):
-        conteo[tablero[i][j]] += 1
-        posiciones[tablero[i][j]] = [i, j]
-
-    return conteo[0], conteo[2] - conteo[4], posiciones[3], posiciones[5]
-
-
-  def __minimax(self):
-    "Encuentra la mejor jugada utilizando el algoritmo minimax."
-    listaMinimax = [None for i in range(len(self.__nodos))]
-    movimientos = listaMinimax[:]
-
-    for nodo in self.__valoresMinimax:
-      self.__evaluarValores(listaMinimax, movimientos, nodo["valor"], nodo["pc"], nodo)
-
-    self.__movimiento = movimientos[0][:]
-
-
-  def __evaluarValores(self, listaMinimax: list, listaMovimientos: list, val: int, mov: list, nodo: dict):
+  def __evaluarValores(self, val: int, mov: list, nodo: dict):
     "Elegir el valor correspondiente y subirlo a través del árbol."
     exponente = ((-1) ** (nodo["profundidad"]))
-    esMayor = (listaMinimax[nodo["posicion"]] == None) or (listaMinimax[nodo["posicion"]] * exponente < val * exponente)
+    esMayor = (self.__valoresMinimax[nodo["posicion"]] == None) or (self.__valoresMinimax[nodo["posicion"]] * exponente < val * exponente)
 
-    if (esMayor):
-      listaMinimax[nodo["posicion"]] = val
-      listaMovimientos[nodo["posicion"]] = mov
+    if (not esMayor):
+      return
 
-      if (nodo["padre"] != None):
-        self.__evaluarValores(listaMinimax, listaMovimientos, val, nodo["pc"], self.__nodos[nodo["padre"]])
+    self.__valoresMinimax[nodo["posicion"]] = val
+    self.__movimientos[nodo["posicion"]] = mov
+
+    if (nodo["padre"] != None):
+      self.__evaluarValores(val, nodo["pc"], self.__nodos[nodo["padre"]])
+
+
+  def __poda(self):
+    "Eliminar los nodos que no tengan hijos."
+    while (self.__listaEspera != [] and self.__nodos[-1]["posicion"] != self.__listaEspera[0]["padre"]):
+      self.__nodos.pop()
+      self.__valoresMinimax.pop()
+      self.__movimientos.pop()
+      """
+      print("nodo borrado: ", self.__nodos.pop())
+      print("valor borrado: ", self.__valoresMinimax.pop())
+      print("movimiento borrado: ", self.__movimientos.pop())
+      """
+
+
+  def __podaAB(self):
+    "Usar el algoritmo de poda alfa y beta."
 
 
   def getMovimiento(self):

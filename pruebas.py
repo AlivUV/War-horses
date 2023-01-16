@@ -1,25 +1,23 @@
-from src.clases.Minimax2 import Minimax
-from src.clases.Tablero import Tablero
+from src.clases.Minimax3 import Minimax
 
 '''
 Tablero con un posible estado del juego
 ejemplificado en el enunciado del proyecto.
 '''
 tablero = [
-  [0, 0, 0, 0, 0, 0, 0, 5],
-  [0, 0, 0, 0, 0, 4, 0, 0],
-  [0, 0, 2, 1, 0, 0, 4, 0],
-  [0, 0, 0, 0, 2, 1, 0, 0],
-  [0, 3, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 1, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0]
+  [0, 0, 0, 0, 0, 0, 5, 0],
+  [0, 0, 2, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 2, 0, 0, 4],
+  [0, 3, 0, 0, 0, 4, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 1]
 ]
 
-pc = Minimax(tablero, 1)
+print("   0  1  2  3  4  5  6  7")
 
-print(pc.getMovimiento())
+for i in range(len(tablero)):
+  print("{} {}".format(i, tablero[i]))
 
-# tablero = Tablero()
-
-# print(tablero.evaluarJugadas())
+pc = Minimax(tablero, 3)

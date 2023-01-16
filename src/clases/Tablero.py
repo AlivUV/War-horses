@@ -1,4 +1,4 @@
-from src.clases.Minimax2 import Minimax
+from src.clases.Minimax3 import Minimax
 from copy import deepcopy
 import random
 
@@ -73,9 +73,9 @@ class Tablero:
 
 
   def imprimirTablero (self):
-    print("  0 1 2 3 4 5 6 7")
+    print("   0  1  2  3  4  5  6  7")
     for i in range(len(self.__tablero)):
-      print("{}. {}".format(i, self.__tablero[i]))
+      print("{} {}".format(i, self.__tablero[i]))
 
 
   def getTablero(self):
