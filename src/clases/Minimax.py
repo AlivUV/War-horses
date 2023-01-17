@@ -24,6 +24,8 @@ class Minimax:
     """
     self.__nodos.clear()
     self.__listaEspera.clear()
+    self.__valoresMinimax.clear()
+    self.__movimientos.clear()
 
     casLibres, valorNodo, pc, jugador =self.__contarCasillas(tablero)
 
@@ -49,6 +51,7 @@ class Minimax:
 
     self.__nodos.clear()
     self.__valoresMinimax.clear()
+    self.__movimientos.clear()
 
 
   def __contarCasillas(self, tablero: list):
