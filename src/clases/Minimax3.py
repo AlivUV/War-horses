@@ -82,16 +82,17 @@ class Minimax:
 
     jugadorTurno, valor = ("pc", 3) if (nodo["profundidad"] % 2 == 0) else ("jugador", 5)
 
-    self.__nodos.append(nodo)
-    self.__valoresMinimax.append(None)
-    self.__movimientos.append(None)
-
     if (nodo["profundidad"] < profundidad):
+      self.__nodos.append(nodo)
+      self.__valoresMinimax.append(None)
+      self.__movimientos.append(None)
+
       for jugada in self.__evaluarJugadas(nodo, jugadorTurno):
         self.__crearHijo(nodo, jugada, jugadorTurno, valor)
+
       del nodo["tablero"]
     else:
-      self.__evaluarValores(nodo["valor"], nodo["pc"], nodo)
+      self.__evaluarHoja(nodo)
       self.__poda()
 
 
@@ -178,32 +179,46 @@ class Minimax:
     return casillasAfectadas
 
 
-  def __evaluarValores(self, val: int, mov: list, nodo: dict):
-    "Elegir el valor correspondiente y subirlo a través del árbol."
-    exponente = ((-1) ** (nodo["profundidad"]))
-    esMayor = (self.__valoresMinimax[nodo["posicion"]] == None) or (self.__valoresMinimax[nodo["posicion"]] * exponente < val * exponente)
+  def __evaluarHoja(self, nodo: dict):
+    self.__valoresMinimax[nodo["padre"]] = nodo["valor"]
+    self.__movimientos[nodo["padre"]] = nodo["pc"]
 
-    if (not esMayor):
-      return
-
-    self.__valoresMinimax[nodo["posicion"]] = val
-    self.__movimientos[nodo["posicion"]] = mov
-
-    if (nodo["padre"] != None):
-      self.__evaluarValores(val, nodo["pc"], self.__nodos[nodo["padre"]])
+    while (self.__listaEspera != [] and nodo["padre"] == self.__listaEspera[0]["padre"]):
+      hermano = self.__listaEspera.pop(0)
+      if (hermano["valor"] < self.__valoresMinimax[nodo["padre"]]):
+        self.__valoresMinimax[nodo["padre"]] = hermano["valor"]
+        self.__movimientos[nodo["padre"]] = hermano["pc"]
 
 
   def __poda(self):
     "Eliminar los nodos que no tengan hijos."
     while (self.__listaEspera != [] and self.__nodos[-1]["posicion"] != self.__listaEspera[0]["padre"]):
-      self.__nodos.pop()
-      self.__valoresMinimax.pop()
+      # print("Antes: ", self.__valoresMinimax)
       self.__movimientos.pop()
-      """
-      print("nodo borrado: ", self.__nodos.pop())
-      print("valor borrado: ", self.__valoresMinimax.pop())
-      print("movimiento borrado: ", self.__movimientos.pop())
-      """
+      self.__subirValor(self.__valoresMinimax.pop(), self.__nodos[-1]["pc"], self.__nodos.pop())
+      # print("Después: ", self.__valoresMinimax)
+
+    if (self.__listaEspera != []):
+      return
+
+    while (self.__nodos[-1]["padre"] != None):
+      self.__movimientos.pop()
+      self.__subirValor(self.__valoresMinimax.pop(), self.__nodos[-1]["pc"], self.__nodos.pop())
+
+
+  def __subirValor(self, val: int, mov: list, nodo: dict):
+    "Elegir el valor correspondiente y subirlo a través del árbol."
+    if (nodo["padre"] == None):
+      return
+
+    exponente = ((-1) ** (nodo["profundidad"] - 1))
+    debeSubir = (self.__valoresMinimax[nodo["padre"]] == None) or (self.__valoresMinimax[nodo["padre"]] * exponente < val * exponente)
+
+    if (not debeSubir):
+      return
+
+    self.__valoresMinimax[nodo["padre"]] = val
+    self.__movimientos[nodo["padre"]] = mov
 
 
   def __podaAB(self):
