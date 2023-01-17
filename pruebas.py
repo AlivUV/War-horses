@@ -1,4 +1,4 @@
-from src.clases.Minimax3 import Minimax
+from src.clases.Minimax import Minimax
 
 '''
 Tablero con un posible estado del juego
